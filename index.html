@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Memory Game - Team 3</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f0f0f0;
+            overflow: hidden;
+            margin: 0;
+            flex-direction: column;
+            position: relative; /* Necesario para posicionar el botón en la parte superior izquierda */
+        }
+
+        h1 {
+            font-size: 36px;
+            font-weight: bold;
+            color: #ff007f; /* Rosa Neón */
+            background: linear-gradient(90deg, #ff007f, #00c8ff); /* Combinación de rosa y azul */
+            -webkit-background-clip: text;
+            background-clip: text;
+            text-align: center;
+            margin-bottom: 10px;
+        }
+
+        h2 {
+            font-size: 28px;
+            font-weight: bold;
+            color: #ff4500; /* Naranja Neón */
+            background: linear-gradient(90deg, #ff4500, #ff914d); /* Combinación de naranja */
+            -webkit-background-clip: text;
+            background-clip: text;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .board {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); /* Ajuste dinámico */
+            gap: 10px;
+            width: 90vw;
+            height: 80vh;
+            padding: 10px;
+            border: 2px solid #333;
+            border-radius: 10px;
+            background-color: #fff;
+        }
+
+        .card {
+            width: 100%; /* Ocupa todo el ancho disponible */
+            height: 100%; /* Ocupa toda la altura disponible */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: #4CAF50;
+            color: transparent;
+            font-size: 16px; /* Reducir el tamaño de la fuente */
+            font-weight: bold;
+            cursor: pointer;
+            border-radius: 10px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card .word {
+            position: absolute;
+            visibility: hidden;
+        }
+
+        .card.flipped .word {
+            visibility: visible;
+        }
+
+        .card.flipped {
+            background-color: #fff;
+            color: #333;
+        }
+
+        .card.matched {
+            background-color: #ffeb3b;
+            color: #333;
+        }
+
+        .card:hover {
+            background-color: #45a049;
+        }
+
+        .message {
+            text-align: center;
+            font-size: 20px;
+            margin-top: 20px;
+            display: none;
+        }
+
+        .game-over {
+            display: block;
+        }
+
+        #restartButton {
+            padding: 10px 20px;
+            font-size: 18px;
+            background-color: #ff5722;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 20px;
+            display: none;
+        }
+
+        #restartButton:hover {
+            background-color: #e64a19;
+        }
+
+        /* Colores del orgullo para el botón */
+        #giveUpButton {
+            padding: 10px 20px;
+            font-size: 10px;
+            background: linear-gradient(90deg, #ff0000, #ff7f00, #ffff00, #00ff00, #0000ff, #4b0082, #9400d3);
+            color: transparent;
+            background-clip: text;
+            border: 2px solid #f01515;
+            font-weight: bold;
+            position: absolute; /* Posiciona el botón */
+            top: 20px; /* 20px desde la parte superior */
+            right: 20px; /* 20px desde el borde derecho */
+            cursor: pointer;
+            display: none; /* Inicialmente oculto */
+        }
+
+        #giveUpButton:hover {
+            background-color: #e64a19;
+        }
+
+        /* Estilo de la ventana emergente */
+        .popup {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background-color: rgba(0, 0, 0, 0.6);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .popup-content {
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 10px;
+            text-align: center;
+            font-size: 20px;
+            max-width: 400px;
+        }
+
+        .popup-button {
+            margin-top: 20px;
+            padding: 10px 20px;
+            background-color: #ff5722;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .popup-button:hover {
+            background-color: #e64a19;
+        }
+
+        /* Botón para la música */
+        #musicButton {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            padding: 10px 20px;
+            font-size: 14px;
+            background-color: #6200ea;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        #musicButton:hover {
+            background-color: #3700b3;
+        }
+
+    </style>
+</head>
+<body>
+
+<h1>Memory Game - Team 3</h1>
+<h2>Going Away</h2>
+
+<div class="board" id="board"></div>
+<div class="message" id="message">¡Congratulations, you've won!</div>
+<button id="restartButton">Replay</button>
+<button id="giveUpButton">I SURRENDER!!</button>
+
+<!-- Ventana emergente -->
+<div class="popup" id="popup">
+    <div class="popup-content">
+        <h3>Team 3</h3>
+        <p>Members:</p>
+        <ul>
+            <li>Hernández Núñez Carlos Daniel</li>
+            <li>Celallos Rojas Axel</li>
+            <li>Ortiz Rodríguez Armando</li>
+            <li>Esqueda Inclán Cristian Axel</li>
+            <li>Hernández Salazar Omar</li>
+            <li>Quiroz Bautista Antonio</li>
+        </ul>
+        <button class="popup-button" id="closePopup">Close</button>
+    </div>
+</div>
+
+<!-- Música -->
+<audio id="backgroundMusic" loop>
+    <source src="Zelda_Ocarina_Of_Time_Music_-_File_Select_[_YouConvert.net_].mp3" type="audio/mp3">
+    Tu navegador no soporta el elemento de audio.
+</audio>
+
+<!-- Botón para iniciar la música -->
+<button id="musicButton">Play Music</button>
+
+<script>
+    const words = [
+        { spanish: 'Aventura', english: 'Adventure' },
+        { spanish: 'Dejar', english: 'Leave' },
+        { spanish: 'Turista', english: 'Tourist' },
+        { spanish: 'Volver', english: 'Fly' },
+        { spanish: 'Pasaporte', english: 'Passport' },
+        { spanish: 'Viaje', english: 'Journey' },
+        { spanish: 'Viajar', english: 'Travel' },
+        { spanish: 'Viaje largo', english: 'Voyage' },
+        { spanish: 'Viaje corto', english: 'Trip' },
+        { spanish: 'Tren', english: 'Train' },
+        { spanish: 'Avión', english: 'Airplane' },
+        { spanish: 'Aeropuerto', english: 'Airport' },
+        { spanish: 'Registro', english: 'Loggin' },
+        { spanish: 'Coche', english: 'Car' },
+        { spanish: 'Mudanza', english: 'Moving' },
+        { spanish: 'Vacaciones', english: 'Vacation' },
+        { spanish: 'Reservar', english: 'Book' },
+        { spanish: 'Ferry', english: 'Ferry' },
+        { spanish: 'Registrarse', english: 'Check in' },
+        { spanish: 'Salir', english: 'Check out' },
+        { spanish: 'Llegada', english: 'Arriving' }
+    ];
+
+    let shuffledWords = [];
+    words.forEach(pair => {
+        shuffledWords.push(createCard(pair.spanish, 'spanish', pair.english));
+        shuffledWords.push(createCard(pair.english, 'english', pair.spanish));
+    });
+
+    shuffledWords = shuffledWords.sort(() => Math.random() - 0.5);
+
+    const board = document.getElementById('board');
+    const message = document.getElementById('message');
+    const restartButton = document.getElementById('restartButton');
+    const giveUpButton = document.getElementById('giveUpButton');
+    const popup = document.getElementById('popup');
+    const closePopup = document.getElementById('closePopup');
+    const musicButton = document.getElementById('musicButton');
+    const backgroundMusic = document.getElementById('backgroundMusic');
+    let flippedCards = [];
+    let matchedPairs = 0;
+    let errors = 0; // Contador de errores
+
+    shuffledWords.forEach(card => {
+        board.appendChild(card);
+    });
+
+    function createCard(word, language, matchWord) {
+        const card = document.createElement('div');
+        card.classList.add('card');
+        card.dataset.language = language;
+        card.dataset.match = matchWord;
+
+        const wordElement = document.createElement('span');
+        wordElement.textContent = word;
+        card.appendChild(wordElement);
+
+        card.addEventListener('click', flipCard);
+
+        return card;
+    }
+
+    function flipCard() {
+        const card = this;
+        if (card.classList.contains('flipped') || flippedCards.length === 2) {
+            return;
+        }
+
+        card.classList.add('flipped');
+        flippedCards.push(card);
+        card.querySelector('span').style.visibility = 'visible';
+
+        if (flippedCards.length === 2) {
+            checkMatch();
+        }
+    }
+
+    function checkMatch() {
+        const [firstCard, secondCard] = flippedCards;
+
+        if (firstCard.dataset.match === secondCard.querySelector('span').textContent ||
+            secondCard.dataset.match === firstCard.querySelector('span').textContent) {
+            firstCard.classList.add('matched');
+            secondCard.classList.add('matched');
+            matchedPairs++;
+        } else {
+            errors++; // Incrementar el contador de errores
+            if (errors >= 8) {
+                giveUpButton.style.display = 'block'; // Mostrar el botón de rendirse
+            }
+
+            setTimeout(() => {
+                firstCard.classList.remove('flipped');
+                secondCard.classList.remove('flipped');
+                firstCard.querySelector('span').style.visibility = 'hidden';
+                secondCard.querySelector('span').style.visibility = 'hidden';
+            }, 1000);
+        }
+
+        if (matchedPairs === words.length) {
+            message.classList.add('game-over');
+            restartButton.style.display = 'block'; // Mostrar el botón de reiniciar
+            giveUpButton.style.display = 'none'; // Ocultar el botón de rendirse
+            showPopup();
+        }
+
+        flippedCards = [];
+    }
+
+    function showPopup() {
+        popup.style.display = 'flex';
+    }
+
+    closePopup.addEventListener('click', () => {
+        popup.style.display = 'none';
+    });
+
+    // Función para reiniciar el juego
+    restartButton.addEventListener('click', () => {
+        // Limpiar el tablero
+        board.innerHTML = '';
+        message.classList.remove('game-over');
+        restartButton.style.display = 'none';
+        giveUpButton.style.display = 'none'; // Ocultar el botón de rendirse
+        flippedCards = [];
+        matchedPairs = 0;
+        errors = 0; // Resetear errores
+
+        // Volver a crear y mezclar las cartas
+        shuffledWords = [];
+        words.forEach(pair => {
+            shuffledWords.push(createCard(pair.spanish, 'spanish', pair.english));
+            shuffledWords.push(createCard(pair.english, 'english', pair.spanish));
+        });
+
+        shuffledWords = shuffledWords.sort(() => Math.random() - 0.5);
+
+        // Añadir las cartas al tablero
+        shuffledWords.forEach(card => {
+            board.appendChild(card);
+        });
+    });
+
+    // Función para rendirse
+    giveUpButton.addEventListener('click', () => {
+        shuffledWords.forEach(card => {
+            card.classList.add('flipped');
+            card.classList.add('matched');
+            card.querySelector('span').style.visibility = 'visible';
+        });
+        matchedPairs = words.length;
+        message.classList.add('game-over');
+        restartButton.style.display = 'block'; // Mostrar el botón de reiniciar
+        giveUpButton.style.display = 'none'; // Ocultar el botón de rendirse
+        showPopup();
+    });
+
+    // Función para iniciar o detener la música
+    musicButton.addEventListener('click', () => {
+        if (backgroundMusic.paused) {
+            backgroundMusic.play();
+            musicButton.textContent = 'Pause Music';
+        } else {
+            backgroundMusic.pause();
+            musicButton.textContent = 'Play Music';
+        }
+    });
+</script>
+
+</body>
+</html>
